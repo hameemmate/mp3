@@ -1,0 +1,126 @@
+# =========================
+# General
+# =========================
+*.class
+*.log
+*.pyc
+*.swp
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE / Editor
+# =========================
+.idea/
+*.iml
+*.ipr
+*.iws
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+
+.atom/
+.history/
+
+# =========================
+# Flutter / Dart
+# =========================
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub/
+.pub-cache/
+build/
+coverage/
+
+# Generated documentation
+doc/api/
+
+# Flutter build files
+**/ios/Flutter/.last_build_id
+
+# =========================
+# Android
+# =========================
+android/.gradle/
+android/captures/
+android/local.properties
+
+# APK / AAB
+*.apk
+*.aab
+
+# Android build folders
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+
+# =========================
+# iOS
+# =========================
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# Xcode
+ios/Runner.xcworkspace/
+xcuserdata/
+*.xcuserstate
+
+# =========================
+# macOS
+# =========================
+macos/Pods/
+macos/Flutter/ephemeral/
+
+# =========================
+# Linux
+# =========================
+linux/flutter/ephemeral/
+
+# =========================
+# Windows
+# =========================
+windows/flutter/ephemeral/
+
+# =========================
+# Web
+# =========================
+web/flutter_service_worker.js
+web/.dart_tool/
+
+# =========================
+# Symbolication / Obfuscation
+# =========================
+app.*.symbols
+app.*.map.json
+
+# =========================
+# Firebase
+# =========================
+firebase-debug.log
+firebase-debug.*.log
+
+# =========================
+# Fastlane
+# =========================
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# =========================
+# Misc
+# =========================
+.build/
+.buildlog/
+.swiftpm/
+.svn/
+migrate_working_dir/
