@@ -1,8 +1,10 @@
+// home.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mp3player/ui/widgets/profile_section.dart';
 import 'package:mp3player/ui/widgets/song_tile.dart';
 import 'package:mp3player/utilities/colors.dart';
+import 'package:mp3player/utilities/theme_controller.dart';
 import '../controllers/song_controller.dart';
 import '../controllers/player_controller.dart';
 
@@ -13,6 +15,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final SongController songController = Get.find();
     final PlayerController playerController = Get.find();
+    final theme = Get.find<ThemeController>();
     final TextEditingController searchCtrl = TextEditingController();
 
     return Scaffold(
@@ -24,26 +27,27 @@ class HomePage extends StatelessWidget {
             // Glass search bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.glassLight,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.glassBorder),
-                ),
-                child: TextField(
-                  controller: searchCtrl,
-                  onChanged: (v) => songController.searchQuery.value = v,
-                  style: const TextStyle(color: AppColors.textPrimary),
-                  decoration: const InputDecoration(
-                    hintText: 'Search songs, artists...',
-                    hintStyle: TextStyle(color: AppColors.textHint),
-                    prefixIcon:
-                        Icon(Icons.search_rounded, color: AppColors.textHint),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
-              ),
+              child: Obx(() => Container(
+                    decoration: BoxDecoration(
+                      color: theme.glassLight,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: theme.glassBorder),
+                    ),
+                    child: TextField(
+                      controller: searchCtrl,
+                      onChanged: (v) => songController.searchQuery.value = v,
+                      style: TextStyle(color: theme.textPrimary),
+                      decoration: InputDecoration(
+                        hintText: 'Search songs, artists...',
+                        hintStyle: TextStyle(color: theme.textHint),
+                        prefixIcon: Icon(Icons.search_rounded,
+                            color: AppColors.textHint),
+                        border: InputBorder.none,
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  )),
             ),
             // Section header
             Padding(
@@ -51,16 +55,15 @@ class HomePage extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('All Songs',
+                  Text('All Songs',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: theme.textPrimary,
                       )),
                   Obx(() => Text(
                         '${songController.filteredSongs.length} tracks',
-                        style: const TextStyle(
-                            fontSize: 12, color: AppColors.textHint),
+                        style: TextStyle(fontSize: 12, color: theme.textHint),
                       )),
                 ],
               ),
@@ -69,15 +72,15 @@ class HomePage extends StatelessWidget {
             Expanded(
               child: Obx(() {
                 if (songController.isLoading.value) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
+                  return Center(
+                    child: CircularProgressIndicator(color: theme.primary),
                   );
                 }
                 final songs = songController.filteredSongs;
                 if (songs.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Text('No songs found',
-                        style: TextStyle(color: AppColors.textSecondary)),
+                        style: TextStyle(color: theme.textSecondary)),
                   );
                 }
                 return ListView.builder(

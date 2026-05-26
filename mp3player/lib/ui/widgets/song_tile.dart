@@ -1,3 +1,4 @@
+// song_tile.dart
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -5,6 +6,7 @@ import 'package:mp3player/controllers/player_controller.dart';
 import 'package:mp3player/controllers/playlist_controller.dart';
 import 'package:mp3player/controllers/song_controller.dart';
 import 'package:mp3player/utilities/colors.dart';
+import 'package:mp3player/utilities/theme_controller.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
 class SongTile extends StatelessWidget {
@@ -20,13 +22,13 @@ class SongTile extends StatelessWidget {
   });
 
   // Deterministic gradient per song id
-  static LinearGradient _gradientFor(int id) {
+  static LinearGradient _gradientFor(int id, AppTheme theme) {
     final gradients = [
-      [AppColors.primary, AppColors.aurora1],
-      [AppColors.aurora3, AppColors.aurora1],
-      [AppColors.aurora2, AppColors.primary],
-      [AppColors.aurora4, AppColors.aurora3],
-      [AppColors.aurora1, AppColors.aurora2],
+      [theme.primary, theme.aurora1],
+      [theme.aurora3, theme.aurora1],
+      [theme.aurora2, theme.primary],
+      [theme.aurora2, theme.aurora3],
+      [theme.aurora1, theme.aurora2],
       [const Color(0xFF10B981), const Color(0xFF3B82F6)],
     ];
     final g = gradients[id % gradients.length];
@@ -39,9 +41,11 @@ class SongTile extends StatelessWidget {
     final PlayerController playerController = Get.find();
     final PlaylistController playlistController = Get.find();
     final SongController songController = Get.find();
+    final ThemeController themeController = Get.find();
 
     return Obx(() {
       final isActive = playerController.currentSong.value?.id == song.id;
+      final theme = themeController.current;
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 6),
@@ -55,19 +59,19 @@ class SongTile extends StatelessWidget {
                 gradient: isActive
                     ? LinearGradient(
                         colors: [
-                          AppColors.primary.withOpacity(0.18),
-                          AppColors.aurora1.withOpacity(0.12),
+                          theme.primary.withOpacity(0.18),
+                          theme.aurora1.withOpacity(0.12),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       )
                     : null,
-                color: isActive ? null : AppColors.glassLight,
+                color: isActive ? null : theme.glassLight,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
                   color: isActive
-                      ? AppColors.primary.withOpacity(0.4)
-                      : AppColors.glassBorder,
+                      ? theme.primary.withOpacity(0.4)
+                      : theme.glassBorder,
                 ),
               ),
               child: ListTile(
@@ -87,7 +91,7 @@ class SongTile extends StatelessWidget {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            gradient: _gradientFor(song.id),
+                            gradient: _gradientFor(song.id, theme),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.music_note_rounded,
@@ -100,7 +104,7 @@ class SongTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: isActive ? AppColors.primary : AppColors.textPrimary,
+                    color: isActive ? theme.primary : theme.textPrimary,
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                     fontSize: 14,
                   ),
@@ -109,41 +113,53 @@ class SongTile extends StatelessWidget {
                   song.artist ?? 'Unknown artist',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style:
-                      const TextStyle(color: AppColors.textHint, fontSize: 12),
+                  style: TextStyle(color: theme.textHint, fontSize: 12),
                 ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isActive) const _EqAnimation(),
                     PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert_rounded,
-                          color: AppColors.textHint, size: 20),
-                      color: const Color(0xFF1A0A30),
+                      icon: Icon(Icons.more_vert_rounded,
+                          color: theme.textHint, size: 20),
+                      color: theme.card,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                       onSelected: (value) {
                         if (value == 'queue') {
                           playerController.addToQueue(song);
-                          Get.snackbar('Queue', 'Added to queue',
-                              backgroundColor: AppColors.glassLight,
-                              colorText: AppColors.textPrimary,
-                              snackPosition: SnackPosition.BOTTOM);
+                          Get.snackbar(
+                            'Queue',
+                            'Added to queue',
+                            backgroundColor: theme.glassLight,
+                            colorText: theme.textPrimary,
+                            snackPosition: SnackPosition.BOTTOM,
+                            duration: const Duration(seconds: 2),
+                          );
                         } else if (value == 'playlist') {
-                          _showAddToPlaylistDialog(context, song,
-                              playlistController, songController);
+                          _showAddToPlaylistDialog(
+                            context,
+                            song,
+                            playlistController,
+                            songController,
+                            themeController,
+                          );
                         }
                       },
                       itemBuilder: (_) => [
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'queue',
-                          child: Text('Add to Queue',
-                              style: TextStyle(color: AppColors.textPrimary)),
+                          child: Text(
+                            'Add to Queue',
+                            style: TextStyle(color: theme.textPrimary),
+                          ),
                         ),
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'playlist',
-                          child: Text('Add to Playlist',
-                              style: TextStyle(color: AppColors.textPrimary)),
+                          child: Text(
+                            'Add to Playlist',
+                            style: TextStyle(color: theme.textPrimary),
+                          ),
                         ),
                       ],
                     ),
@@ -158,15 +174,24 @@ class SongTile extends StatelessWidget {
     });
   }
 
-  void _showAddToPlaylistDialog(BuildContext context, SongModel song,
-      PlaylistController playlistController, SongController songController) {
+  void _showAddToPlaylistDialog(
+    BuildContext context,
+    SongModel song,
+    PlaylistController playlistController,
+    SongController songController,
+    ThemeController themeController,
+  ) {
     final playlists = playlistController.playlists;
+    final theme = themeController.current;
+
     Get.dialog(
       AlertDialog(
-        backgroundColor: const Color(0xFF1A0A30),
+        backgroundColor: theme.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Add to Playlist',
-            style: TextStyle(color: AppColors.textPrimary)),
+        title: Text(
+          'Add to Playlist',
+          style: TextStyle(color: theme.textPrimary),
+        ),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -175,29 +200,46 @@ class SongTile extends StatelessWidget {
             itemBuilder: (context, index) {
               if (index == playlists.length) {
                 return ListTile(
-                  leading: const Icon(Icons.add_circle_outline,
-                      color: AppColors.primary),
-                  title: const Text('Create new playlist',
-                      style: TextStyle(color: AppColors.textPrimary)),
+                  leading: Icon(
+                    Icons.add_circle_outline,
+                    color: theme.primary,
+                  ),
+                  title: Text(
+                    'Create new playlist',
+                    style: TextStyle(color: theme.textPrimary),
+                  ),
                   onTap: () {
                     Get.back();
-                    _createNewPlaylistAndAdd(context, song, playlistController);
+                    _createNewPlaylistAndAdd(
+                      context,
+                      song,
+                      playlistController,
+                      themeController,
+                    );
                   },
                 );
               }
               final playlist = playlists[index];
               return ListTile(
-                leading: const Icon(Icons.library_music_rounded,
-                    color: AppColors.aurora1),
-                title: Text(playlist.name,
-                    style: const TextStyle(color: AppColors.textPrimary)),
+                leading: Icon(
+                  Icons.library_music_rounded,
+                  color: theme.aurora1,
+                ),
+                title: Text(
+                  playlist.name,
+                  style: TextStyle(color: theme.textPrimary),
+                ),
                 onTap: () {
                   playlistController.addSongToPlaylist(playlist.id, song.data);
                   Get.back();
-                  Get.snackbar('Added', 'Song added to ${playlist.name}',
-                      backgroundColor: AppColors.glassLight,
-                      colorText: AppColors.textPrimary,
-                      snackPosition: SnackPosition.BOTTOM);
+                  Get.snackbar(
+                    'Added',
+                    'Song added to ${playlist.name}',
+                    backgroundColor: theme.glassLight,
+                    colorText: theme.textPrimary,
+                    snackPosition: SnackPosition.BOTTOM,
+                    duration: const Duration(seconds: 2),
+                  );
                 },
               );
             },
@@ -206,45 +248,57 @@ class SongTile extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.textHint)),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: theme.textHint),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _createNewPlaylistAndAdd(BuildContext context, SongModel song,
-      PlaylistController playlistController) {
+  void _createNewPlaylistAndAdd(
+    BuildContext context,
+    SongModel song,
+    PlaylistController playlistController,
+    ThemeController themeController,
+  ) {
     final nameCtrl = TextEditingController();
+    final theme = themeController.current;
+
     Get.dialog(
       AlertDialog(
-        backgroundColor: const Color(0xFF1A0A30),
+        backgroundColor: theme.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('New Playlist',
-            style: TextStyle(color: AppColors.textPrimary)),
+        title: Text(
+          'New Playlist',
+          style: TextStyle(color: theme.textPrimary),
+        ),
         content: TextField(
           controller: nameCtrl,
           autofocus: true,
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: theme.textPrimary),
           decoration: InputDecoration(
             hintText: 'Playlist name',
-            hintStyle: const TextStyle(color: AppColors.textHint),
+            hintStyle: TextStyle(color: theme.textHint),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.glassBorder),
+              borderSide: BorderSide(color: theme.glassBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary),
+              borderSide: BorderSide(color: theme.primary),
             ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.textHint)),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: theme.textHint),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -255,15 +309,22 @@ class SongTile extends StatelessWidget {
                 Get.back();
                 Get.back();
                 Get.snackbar(
-                    'Created', 'Playlist "${newPlaylist.name}" created',
-                    backgroundColor: AppColors.glassLight,
-                    colorText: AppColors.textPrimary,
-                    snackPosition: SnackPosition.BOTTOM);
+                  'Created',
+                  'Playlist "${newPlaylist.name}" created',
+                  backgroundColor: theme.glassLight,
+                  colorText: theme.textPrimary,
+                  snackPosition: SnackPosition.BOTTOM,
+                  duration: const Duration(seconds: 2),
+                );
               }
             },
-            child: const Text('Create',
-                style: TextStyle(
-                    color: AppColors.primary, fontWeight: FontWeight.w600)),
+            child: Text(
+              'Create',
+              style: TextStyle(
+                color: theme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -274,6 +335,7 @@ class SongTile extends StatelessWidget {
 /// Animated EQ bars shown on active song
 class _EqAnimation extends StatefulWidget {
   const _EqAnimation();
+
   @override
   State<_EqAnimation> createState() => _EqAnimationState();
 }
@@ -302,6 +364,8 @@ class _EqAnimationState extends State<_EqAnimation>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Get.find<ThemeController>();
+
     return Padding(
       padding: const EdgeInsets.only(right: 4),
       child: Row(
@@ -315,7 +379,7 @@ class _EqAnimationState extends State<_EqAnimation>
               height: 6 + _controllers[i].value * 10,
               margin: const EdgeInsets.symmetric(horizontal: 1),
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: theme.primary,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

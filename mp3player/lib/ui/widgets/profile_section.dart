@@ -1,8 +1,10 @@
+// profile_section.dart
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mp3player/controllers/song_controller.dart';
 import 'package:mp3player/utilities/colors.dart';
+import 'package:mp3player/utilities/theme_controller.dart';
 
 class ProfileSection extends StatelessWidget {
   const ProfileSection({super.key});
@@ -10,6 +12,7 @@ class ProfileSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final SongController songController = Get.find();
+    final theme = Get.find<ThemeController>();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
@@ -20,9 +23,9 @@ class ProfileSection extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.glassLight,
+              color: theme.glassLight,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.glassBorder),
+              border: Border.all(color: theme.glassBorder),
             ),
             child: Row(
               children: [
@@ -32,14 +35,14 @@ class ProfileSection extends StatelessWidget {
                   height: 46,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      colors: [AppColors.aurora1, AppColors.aurora2],
+                    gradient: LinearGradient(
+                      colors: [theme.aurora1, theme.aurora2],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.aurora1.withOpacity(0.4),
+                        color: theme.aurora1.withOpacity(0.4),
                         blurRadius: 12,
                         spreadRadius: 1,
                       ),
@@ -52,24 +55,23 @@ class ProfileSection extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Music Lover',
+                    Text('Music Lover',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: theme.textPrimary,
                         )),
                     const SizedBox(height: 2),
                     Obx(() => Text(
                           '${songController.allSongs.length} songs on device',
-                          style: const TextStyle(
-                              color: AppColors.textHint, fontSize: 12),
+                          style: TextStyle(color: theme.textHint, fontSize: 12),
                         )),
                   ],
                 ),
                 const Spacer(),
                 // Decorative music note
                 Icon(Icons.graphic_eq_rounded,
-                    color: AppColors.primary.withOpacity(0.7), size: 28),
+                    color: theme.primary.withOpacity(0.7), size: 28),
               ],
             ),
           ),

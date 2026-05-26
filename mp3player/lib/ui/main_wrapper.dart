@@ -9,12 +9,14 @@ import 'package:mp3player/ui/queue.dart';
 import 'package:mp3player/ui/widgets/mini_play.dart';
 import 'package:mp3player/ui/widgets/galaxy_widgets.dart';
 import 'package:mp3player/utilities/colors.dart';
+import 'package:mp3player/utilities/theme_controller.dart';
 
 class MainWrapper extends StatelessWidget {
   const MainWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Get.find<ThemeController>();
     final RxInt currentIndex = 0.obs;
     final pages = const [
       HomePage(),
@@ -46,24 +48,25 @@ class MainWrapper extends StatelessWidget {
             left: 0,
             right: 0,
             bottom: 0,
-            child: buttonAndMiniPlayer(currentIndex),
+            child: Obx(() => buttonAndMiniPlayer(currentIndex, theme)),
           ),
         ],
       ),
     );
   }
 
-  Widget buttonAndMiniPlayer(RxInt currentIndex) {
+  Widget buttonAndMiniPlayer(RxInt currentIndex, ThemeController theme) {
     return Column(
       children: [
-        MiniPlayer(),
+        const MiniPlayer(),
         SizedBox(
           height: Get.width * .01,
         ),
-        Obx(() => _GlassBottomNav(
-              currentIndex: currentIndex.value,
-              onTap: (i) => currentIndex.value = i,
-            )),
+        _GlassBottomNav(
+          currentIndex: currentIndex.value,
+          onTap: (i) => currentIndex.value = i,
+          theme: theme.current,
+        ),
       ],
     );
   }
@@ -72,8 +75,13 @@ class MainWrapper extends StatelessWidget {
 class _GlassBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final AppTheme theme;
 
-  const _GlassBottomNav({required this.currentIndex, required this.onTap});
+  const _GlassBottomNav({
+    required this.currentIndex,
+    required this.onTap,
+    required this.theme,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -92,9 +100,9 @@ class _GlassBottomNav extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.glassLight,
+              color: theme.glassLight,
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: AppColors.glassBorder),
+              border: Border.all(color: theme.glassBorder),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             child: Row(
@@ -111,11 +119,10 @@ class _GlassBottomNav extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
                       color: active
-                          ? AppColors.primary.withOpacity(0.15)
+                          ? theme.primary.withOpacity(0.15)
                           : Colors.transparent,
                       border: active
-                          ? Border.all(
-                              color: AppColors.primary.withOpacity(0.3))
+                          ? Border.all(color: theme.primary.withOpacity(0.3))
                           : null,
                     ),
                     child: Column(
@@ -124,8 +131,7 @@ class _GlassBottomNav extends StatelessWidget {
                         Icon(
                           items[i].icon,
                           size: 22,
-                          color:
-                              active ? AppColors.primary : AppColors.textHint,
+                          color: active ? theme.primary : theme.textHint,
                         ),
                         const SizedBox(height: 3),
                         Text(
@@ -134,8 +140,7 @@ class _GlassBottomNav extends StatelessWidget {
                             fontSize: 10,
                             fontWeight:
                                 active ? FontWeight.w600 : FontWeight.w400,
-                            color:
-                                active ? AppColors.primary : AppColors.textHint,
+                            color: active ? theme.primary : theme.textHint,
                           ),
                         ),
                       ],

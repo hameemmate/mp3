@@ -1,259 +1,388 @@
-// galaxy_widgets.dart
+// galaxy_widgets.dart - Update to use theme colors
+import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:mp3player/utilities/colors.dart';
+import 'package:mp3player/utilities/theme_controller.dart';
 
-/// Animated Galaxy Background with moving stars and nebula
-class GalaxyBackground extends StatefulWidget {
+/// Drop-in — wrap any screen
+class GalaxyBackground extends StatelessWidget {
   final Widget child;
   const GalaxyBackground({super.key, required this.child});
 
   @override
-  State<GalaxyBackground> createState() => _GalaxyBackgroundState();
+  Widget build(BuildContext context) {
+    final theme = Get.find<ThemeController>();
+
+    return Obx(() => Stack(
+          fit: StackFit.expand,
+          children: [
+            // Dynamic background based on theme
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.current.background,
+                    theme.current.surface,
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+            const _StarField(),
+            _AuroraLayer(theme: theme.current),
+            _WaveformLayer(theme: theme.current),
+            child,
+          ],
+        ));
+  }
 }
 
-class _GalaxyBackgroundState extends State<GalaxyBackground>
+// Update AuroraLayer to accept theme
+class _AuroraLayer extends StatefulWidget {
+  final AppTheme theme;
+  const _AuroraLayer({required this.theme});
+
+  @override
+  State<_AuroraLayer> createState() => _AuroraLayerState();
+}
+
+class _AuroraLayerState extends State<_AuroraLayer>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late List<_MovingStar> _movingStars;
-  late List<_NebulaBlob> _nebulas;
+  late AnimationController _ctrl;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 60),
-    )..repeat();
-
-    // Create moving stars with trails
-    _movingStars = List.generate(80, (i) {
-      return _MovingStar(
-        startX: (i * 2654435761 % 1000) / 1000.0,
-        startY: ((i * 1234567) % 1000) / 1000.0,
-        speed: 0.0005 + (i % 5) * 0.0002,
-        size: 1.5 + (i % 3),
-        tailLength: 3 + (i % 5),
-      );
-    });
-
-    // Animated nebulas
-    _nebulas = [
-      _NebulaBlob(size: 240, color: AppColors.nebulaViolet, speed: 0.5),
-      _NebulaBlob(size: 200, color: AppColors.nebulaCyan, speed: 0.3),
-      _NebulaBlob(size: 180, color: AppColors.nebulaGreen, speed: 0.7),
-      _NebulaBlob(size: 160, color: AppColors.nebulaRose, speed: 0.4),
-    ];
+    _ctrl =
+        AnimationController(vsync: this, duration: const Duration(seconds: 9))
+          ..repeat();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _ctrl.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        // Update nebula positions
-        for (var nebula in _nebulas) {
-          nebula.update(_animationController.value);
-        }
-
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            // Base gradient
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF050010),
-                    Color(0xFF0D0025),
-                    Color(0xFF00152B)
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-            ),
-            // Animated nebulas
-            ..._nebulas.map((nebula) => Positioned(
-                  top: nebula.yOffset,
-                  left: nebula.xOffset,
-                  child: _nebulaBlob(nebula.size, nebula.color),
-                )),
-            // Shooting stars with trails
-            CustomPaint(
-              painter: _ShootingStarPainter(
-                movingStars: _movingStars,
-                animationValue: _animationController.value,
-              ),
-              size: Size.infinite,
-            ),
-            // Static stars background
-            const _StarField(),
-            // Content with glass effect overlay
-            child!,
-          ],
-        );
-      },
-      child: widget.child,
-    );
-  }
-
-  Widget _nebulaBlob(double size, Color color) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color, Colors.transparent],
-          stops: const [0.3, 1.0],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _ctrl,
+        builder: (_, __) => CustomPaint(
+            painter: _AuroraPainter(_ctrl.value, widget.theme),
+            size: Size.infinite),
+      );
 }
 
-class _NebulaBlob {
-  final double size;
-  final Color color;
-  final double speed;
-  double xOffset;
-  double yOffset;
+class _AuroraPainter extends CustomPainter {
+  final double t;
+  final AppTheme theme;
 
-  _NebulaBlob({
-    required this.size,
-    required this.color,
-    required this.speed,
-  })  : xOffset = (size * 2654435761 % 800) - 400,
-        yOffset = ((size * 2654435761 * 1234567) % 800) - 300;
-
-  void update(double animationValue) {
-    xOffset = (xOffset + speed * 0.5) % 800 - 400;
-    yOffset = (yOffset + speed * 0.3) % 800 - 400;
-  }
-}
-
-class _MovingStar {
-  double startX, startY;
-  final double speed;
-  final double size;
-  final int tailLength;
-
-  _MovingStar({
-    required this.startX,
-    required this.startY,
-    required this.speed,
-    required this.size,
-    required this.tailLength,
-  });
-}
-
-class _ShootingStarPainter extends CustomPainter {
-  final List<_MovingStar> movingStars;
-  final double animationValue;
-
-  _ShootingStarPainter(
-      {required this.movingStars, required this.animationValue});
+  _AuroraPainter(this.t, this.theme);
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (var star in movingStars) {
-      final progress = (animationValue * star.speed * 100) % 1.0;
-      final currentX = (star.startX + progress) % 1.0;
-      final currentY = (star.startY + progress * 0.3) % 1.0;
+    final ribbons = theme.auroraRibbons;
 
-      final x = currentX * size.width;
-      final y = currentY * size.height;
-
-      // Draw trail stars
-      for (int i = 1; i <= star.tailLength; i++) {
-        final trailProgress = (progress - i * 0.02) % 1.0;
-        if (trailProgress > 0) {
-          final trailX = (star.startX + trailProgress) % 1.0 * size.width;
-          final trailY =
-              (star.startY + trailProgress * 0.3) % 1.0 * size.height;
-          final opacity = (1 - i / star.tailLength) * 0.3;
-
-          final paint = Paint()
-            ..color = Colors.white.withOpacity(opacity)
-            ..style = PaintingStyle.fill;
-          canvas.drawCircle(Offset(trailX, trailY), star.size * 0.5, paint);
-        }
-      }
-
-      // Draw main star
-      final mainPaint = Paint()
-        ..color = Colors.white.withOpacity(0.8 + (progress * 0.2))
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(Offset(x, y), star.size, mainPaint);
+    // Use theme's ribbon colors
+    if (ribbons.isNotEmpty) {
+      _ribbon(canvas, size,
+          phase: t * 2 * pi,
+          yBase: size.height * 0.18,
+          amplitude: size.height * 0.07,
+          ribbonH: size.height * 0.13,
+          color1: ribbons[0][0],
+          color2: ribbons[0][1],
+          opacity: 0.30,
+          blur: 22);
+    }
+    if (ribbons.length > 1) {
+      _ribbon(canvas, size,
+          phase: t * 2 * pi + 1.6,
+          yBase: size.height * 0.10,
+          amplitude: size.height * 0.05,
+          ribbonH: size.height * 0.10,
+          color1: ribbons[1][0],
+          color2: ribbons[1][1],
+          opacity: 0.24,
+          blur: 18);
+    }
+    if (ribbons.length > 2) {
+      _ribbon(canvas, size,
+          phase: t * 2 * pi + 3.2,
+          yBase: size.height * 0.28,
+          amplitude: size.height * 0.06,
+          ribbonH: size.height * 0.11,
+          color1: ribbons[2][0],
+          color2: ribbons[2][1],
+          opacity: 0.20,
+          blur: 20);
+    }
+    if (ribbons.length > 3) {
+      _ribbon(canvas, size,
+          phase: t * 2 * pi + 4.8,
+          yBase: size.height * 0.06,
+          amplitude: size.height * 0.04,
+          ribbonH: size.height * 0.08,
+          color1: ribbons[3][0],
+          color2: ribbons[3][1],
+          opacity: 0.16,
+          blur: 16);
+    }
+    if (ribbons.length > 4) {
+      _ribbon(canvas, size,
+          phase: t * 2 * pi + 0.9,
+          yBase: size.height * 0.35,
+          amplitude: size.height * 0.05,
+          ribbonH: size.height * 0.09,
+          color1: ribbons[4][0],
+          color2: ribbons[4][1],
+          opacity: 0.14,
+          blur: 14);
     }
   }
 
+  void _ribbon(
+    Canvas canvas,
+    Size size, {
+    required double phase,
+    required double yBase,
+    required double amplitude,
+    required double ribbonH,
+    required Color color1,
+    required Color color2,
+    required double opacity,
+    required double blur,
+  }) {
+    const steps = 100;
+    final path = Path();
+    for (int i = 0; i <= steps; i++) {
+      final x = size.width * i / steps;
+      final y = yBase +
+          amplitude * sin(phase + i * 0.09) +
+          amplitude * 0.35 * sin(phase * 1.5 + i * 0.15);
+      if (i == 0)
+        path.moveTo(x, y);
+      else
+        path.lineTo(x, y);
+    }
+    for (int i = steps; i >= 0; i--) {
+      final x = size.width * i / steps;
+      final y = yBase +
+          amplitude * sin(phase + i * 0.09) +
+          amplitude * 0.35 * sin(phase * 1.5 + i * 0.15) +
+          ribbonH;
+      path.lineTo(x, y);
+    }
+    path.close();
+    canvas.drawPath(
+        path,
+        Paint()
+          ..shader = LinearGradient(
+            colors: [
+              color1.withOpacity(0),
+              color1.withOpacity(opacity),
+              color2.withOpacity(opacity * 0.85),
+              color2.withOpacity(0)
+            ],
+            stops: const [0.0, 0.2, 0.8, 1.0],
+          ).createShader(Rect.fromLTWH(0, 0, size.width, size.height * 0.5))
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, blur));
+  }
+
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _AuroraPainter old) =>
+      old.t != t || old.theme != theme;
 }
 
-class _StarField extends StatelessWidget {
-  const _StarField();
+// Update WaveformLayer to accept theme
+class _WaveformLayer extends StatefulWidget {
+  final AppTheme theme;
+  const _WaveformLayer({required this.theme});
 
   @override
-  Widget build(BuildContext context) {
-    return CustomPaint(painter: _StarPainter());
+  State<_WaveformLayer> createState() => _WaveformLayerState();
+}
+
+class _WaveformLayerState extends State<_WaveformLayer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl =
+        AnimationController(vsync: this, duration: const Duration(seconds: 4))
+          ..repeat();
   }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _ctrl,
+        builder: (_, __) => CustomPaint(
+            painter: _WaveformPainter(_ctrl.value, widget.theme),
+            size: Size.infinite),
+      );
+}
+
+class _WaveformPainter extends CustomPainter {
+  final double t;
+  final AppTheme theme;
+
+  _WaveformPainter(this.t, this.theme);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final baseY = size.height * 0.78;
+
+    // Filled glow under main wave
+    _drawFill(canvas, size, baseY,
+        phase: t * 2 * pi, amplitude: size.height * 0.04, color: theme.primary);
+    _drawFill(canvas, size, baseY + size.height * 0.012,
+        phase: t * 2 * pi * 1.3 + 1.0,
+        amplitude: size.height * 0.03,
+        color: theme.aurora1);
+
+    // Wave lines
+    _drawWave(canvas, size, baseY,
+        phase: t * 2 * pi,
+        amplitude: size.height * 0.04,
+        color: theme.primary,
+        opacity: 0.45,
+        strokeW: 2.0);
+    _drawWave(canvas, size, baseY + size.height * 0.015,
+        phase: t * 2 * pi * 1.4 + 1.0,
+        amplitude: size.height * 0.03,
+        color: theme.aurora1,
+        opacity: 0.30,
+        strokeW: 1.5);
+    _drawWave(canvas, size, baseY - size.height * 0.015,
+        phase: t * 2 * pi * 0.7 + 2.5,
+        amplitude: size.height * 0.025,
+        color: theme.aurora2,
+        opacity: 0.25,
+        strokeW: 1.5);
+    _drawWave(canvas, size, baseY + size.height * 0.03,
+        phase: t * 2 * pi * 1.1 + 3.8,
+        amplitude: size.height * 0.02,
+        color: theme.aurora3,
+        opacity: 0.18,
+        strokeW: 1.2);
+  }
+
+  void _drawWave(
+    Canvas canvas,
+    Size size,
+    double baseY, {
+    required double phase,
+    required double amplitude,
+    required Color color,
+    required double opacity,
+    required double strokeW,
+  }) {
+    final path = Path();
+    const steps = 120;
+    for (int i = 0; i <= steps; i++) {
+      final x = size.width * i / steps;
+      final y = baseY +
+          amplitude * sin(phase + i * 0.12) +
+          amplitude * 0.4 * sin(phase * 2 + i * 0.2);
+      if (i == 0)
+        path.moveTo(x, y);
+      else
+        path.lineTo(x, y);
+    }
+    canvas.drawPath(
+        path,
+        Paint()
+          ..color = color.withOpacity(opacity)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeW
+          ..strokeCap = StrokeCap.round);
+  }
+
+  void _drawFill(
+    Canvas canvas,
+    Size size,
+    double baseY, {
+    required double phase,
+    required double amplitude,
+    required Color color,
+  }) {
+    final path = Path();
+    const steps = 120;
+    path.moveTo(0, size.height);
+    for (int i = 0; i <= steps; i++) {
+      final x = size.width * i / steps;
+      final y = baseY +
+          amplitude * sin(phase + i * 0.12) +
+          amplitude * 0.4 * sin(phase * 2 + i * 0.2);
+      path.lineTo(x, y);
+    }
+    path.lineTo(size.width, size.height);
+    path.close();
+    canvas.drawPath(
+        path,
+        Paint()
+          ..shader = LinearGradient(
+            colors: [color.withOpacity(0.14), color.withOpacity(0.0)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ).createShader(
+              Rect.fromLTWH(0, baseY, size.width, size.height - baseY)));
+  }
+
+  @override
+  bool shouldRepaint(covariant _WaveformPainter old) =>
+      old.t != t || old.theme != theme;
+}
+
+// Star field remains the same
+class _StarField extends StatelessWidget {
+  const _StarField();
+  @override
+  Widget build(BuildContext context) => CustomPaint(painter: _StarPainter());
 }
 
 class _StarPainter extends CustomPainter {
-  static final List<_Star> _stars = List.generate(200, (i) {
-    final rand = i * 2654435761 % 1000;
-    return _Star(
-      x: (rand % 1000) / 1000.0,
-      y: ((rand * 1234567) % 1000) / 1000.0,
-      r: (rand % 5 + 1) / 3.0,
-      opacity: (rand % 7 + 3) / 10.0,
-      twinkleSpeed: 0.5 + (i % 10) * 0.1,
-    );
+  static final _stars = List.generate(160, (i) {
+    final r = (i * 2654435761 + 1234567) % 100000;
+    return _S(
+        x: (r % 1000) / 1000.0,
+        y: ((r * 999983) % 1000) / 1000.0,
+        radius: (r % 5 + 2) / 5.5,
+        opacity: (r % 6 + 2) / 14.0);
   });
-
   @override
   void paint(Canvas canvas, Size size) {
     for (final s in _stars) {
-      final twinkle =
-          (DateTime.now().millisecondsSinceEpoch / 1000 * s.twinkleSpeed) % 1.0;
-      final opacity = s.opacity * (0.5 + twinkle * 0.5);
-
-      final paint = Paint()
-        ..color = Colors.white.withOpacity(opacity)
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(
-        Offset(s.x * size.width, s.y * size.height),
-        s.r,
-        paint,
-      );
+      canvas.drawCircle(Offset(s.x * size.width, s.y * size.height), s.radius,
+          Paint()..color = Colors.white.withOpacity(s.opacity));
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter old) => true;
+  bool shouldRepaint(_) => false;
 }
 
-class _Star {
-  final double x, y, r, opacity, twinkleSpeed;
-  const _Star({
-    required this.x,
-    required this.y,
-    required this.r,
-    required this.opacity,
-    required this.twinkleSpeed,
-  });
+class _S {
+  final double x, y, radius, opacity;
+  const _S(
+      {required this.x,
+      required this.y,
+      required this.radius,
+      required this.opacity});
 }
 
-/// Frosted liquid-glass card (unchanged)
+// GlassCard helper - unchanged but uses AppColors which now gets from theme
 class GlassCard extends StatelessWidget {
   final Widget child;
   final double borderRadius;

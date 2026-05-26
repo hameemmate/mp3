@@ -1,10 +1,11 @@
-// mini_play.dart - simplified version for floating
+// mini_play.dart
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mp3player/controllers/player_controller.dart';
 import 'package:mp3player/ui/now_playing.dart';
 import 'package:mp3player/utilities/colors.dart';
+import 'package:mp3player/utilities/theme_controller.dart';
 
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key});
@@ -12,6 +13,7 @@ class MiniPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<PlayerController>();
+    final theme = Get.find<ThemeController>();
 
     return Obx(() {
       if (controller.currentSong.value == null) return const SizedBox.shrink();
@@ -34,14 +36,14 @@ class MiniPlayer extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.primary.withOpacity(0.12),
-                      AppColors.aurora1.withOpacity(0.12),
+                      theme.primary.withOpacity(0.12),
+                      theme.aurora1.withOpacity(0.12),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: AppColors.glassBorder),
+                  border: Border.all(color: theme.glassBorder),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -55,15 +57,15 @@ class MiniPlayer extends StatelessWidget {
                             width: 42,
                             height: 42,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [AppColors.primary, AppColors.aurora1],
+                              gradient: LinearGradient(
+                                colors: [theme.primary, theme.aurora1],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primary.withOpacity(0.35),
+                                  color: theme.primary.withOpacity(0.35),
                                   blurRadius: 10,
                                   spreadRadius: 1,
                                 ),
@@ -79,17 +81,16 @@ class MiniPlayer extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(song.displayNameWOExt,
-                                    style: const TextStyle(
-                                      color: AppColors.textPrimary,
+                                    style: TextStyle(
+                                      color: theme.textPrimary,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis),
                                 Text(song.artist ?? 'Unknown',
-                                    style: const TextStyle(
-                                        color: AppColors.textHint,
-                                        fontSize: 12),
+                                    style: TextStyle(
+                                        color: theme.textHint, fontSize: 12),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis),
                               ],
@@ -99,23 +100,24 @@ class MiniPlayer extends StatelessWidget {
                           Obx(() => IconButton(
                                 icon: Icon(Icons.shuffle_rounded,
                                     color: controller.isShuffleOn.value
-                                        ? AppColors.primary
-                                        : AppColors.textHint,
+                                        ? theme.primary
+                                        : theme.textHint,
                                     size: 20),
                                 onPressed: controller.toggleShuffle,
                               )),
                           IconButton(
-                            icon: const Icon(Icons.skip_previous_rounded,
-                                color: AppColors.textSecondary, size: 22),
+                            icon: Icon(Icons.skip_previous_rounded,
+                                color: theme.textSecondary, size: 22),
                             onPressed: controller.previous,
                           ),
                           Obx(() => _PlayPauseBtn(
                                 isPlaying: controller.isPlaying.value,
                                 onTap: controller.playPause,
+                                theme: theme.current,
                               )),
                           IconButton(
-                            icon: const Icon(Icons.skip_next_rounded,
-                                color: AppColors.textSecondary, size: 22),
+                            icon: Icon(Icons.skip_next_rounded,
+                                color: theme.textSecondary, size: 22),
                             onPressed: controller.next,
                           ),
                         ],
@@ -129,9 +131,9 @@ class MiniPlayer extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: progress.clamp(0.0, 1.0),
                           minHeight: 3,
-                          backgroundColor: AppColors.glassBorder,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                              AppColors.primary),
+                          backgroundColor: theme.glassBorder,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(AppColors.primary),
                         ),
                       ),
                     ),
@@ -149,7 +151,13 @@ class MiniPlayer extends StatelessWidget {
 class _PlayPauseBtn extends StatelessWidget {
   final bool isPlaying;
   final VoidCallback onTap;
-  const _PlayPauseBtn({required this.isPlaying, required this.onTap});
+  final AppTheme theme;
+
+  const _PlayPauseBtn({
+    required this.isPlaying,
+    required this.onTap,
+    required this.theme,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -160,10 +168,10 @@ class _PlayPauseBtn extends StatelessWidget {
         height: 36,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppColors.primary,
+          color: theme.primary,
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.4),
+              color: theme.primary.withOpacity(0.4),
               blurRadius: 12,
               spreadRadius: 1,
             ),

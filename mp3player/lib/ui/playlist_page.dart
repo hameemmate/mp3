@@ -1,7 +1,9 @@
+// playlist_page.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mp3player/ui/play_list_details.dart';
 import 'package:mp3player/utilities/colors.dart';
+import 'package:mp3player/utilities/theme_controller.dart';
 import '../controllers/playlist_controller.dart';
 
 class PlaylistsPage extends StatelessWidget {
@@ -10,26 +12,27 @@ class PlaylistsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final PlaylistController controller = Get.find();
+    final theme = Get.find<ThemeController>();
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Make transparent
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: Colors.transparent, // Make transparent
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Playlists',
-            style: TextStyle(color: AppColors.textPrimary)),
+        title: Text('Playlists', style: TextStyle(color: theme.textPrimary)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add, color: AppColors.textPrimary),
-            onPressed: () => _showCreatePlaylistDialog(context, controller),
+            icon: Icon(Icons.add, color: theme.textPrimary),
+            onPressed: () =>
+                _showCreatePlaylistDialog(context, controller, theme),
           ),
         ],
       ),
       body: Obx(() {
         if (controller.playlists.isEmpty) {
-          return const Center(
+          return Center(
             child: Text('No playlists yet. Tap + to create one.',
-                style: TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: theme.textSecondary)),
           );
         }
         return ListView.builder(
@@ -37,25 +40,24 @@ class PlaylistsPage extends StatelessWidget {
           itemBuilder: (context, index) {
             final playlist = controller.playlists[index];
             return ListTile(
-              leading:
-                  const Icon(Icons.playlist_play, color: AppColors.primary),
+              leading: Icon(Icons.playlist_play, color: theme.primary),
               title: Text(playlist.name,
-                  style: const TextStyle(color: AppColors.textPrimary)),
+                  style: TextStyle(color: theme.textPrimary)),
               subtitle: Text('${playlist.songPaths.length} songs',
-                  style: const TextStyle(color: AppColors.textHint)),
+                  style: TextStyle(color: theme.textHint)),
               onTap: () => Get.to(() => PlaylistDetailPage(playlist: playlist)),
               trailing: PopupMenuButton<String>(
-                color: const Color(0xFF1A0A30),
+                color: theme.card,
                 onSelected: (value) {
                   if (value == 'delete') {
                     controller.deletePlaylist(playlist.id);
                   }
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'delete',
                     child: Text('Delete',
-                        style: TextStyle(color: AppColors.textPrimary)),
+                        style: TextStyle(color: theme.textPrimary)),
                   ),
                 ],
               ),
@@ -69,18 +71,28 @@ class PlaylistsPage extends StatelessWidget {
   void _showCreatePlaylistDialog(
     BuildContext context,
     PlaylistController controller,
+    ThemeController theme,
   ) {
     final TextEditingController nameController = TextEditingController();
     Get.dialog(
       AlertDialog(
-        title: const Text('Create Playlist'),
+        backgroundColor: theme.card,
+        title:
+            Text('Create Playlist', style: TextStyle(color: theme.textPrimary)),
         content: TextField(
           controller: nameController,
-          decoration: const InputDecoration(hintText: 'Playlist name'),
+          style: TextStyle(color: theme.textPrimary),
+          decoration: InputDecoration(
+            hintText: 'Playlist name',
+            hintStyle: TextStyle(color: theme.textHint),
+          ),
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('Cancel', style: TextStyle(color: theme.textHint)),
+          ),
           TextButton(
             onPressed: () {
               if (nameController.text.trim().isNotEmpty) {
@@ -88,7 +100,7 @@ class PlaylistsPage extends StatelessWidget {
                 Get.back();
               }
             },
-            child: const Text('Create'),
+            child: Text('Create', style: TextStyle(color: theme.primary)),
           ),
         ],
       ),

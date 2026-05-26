@@ -1,11 +1,12 @@
+// play_list_details.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mp3player/models/playlist_model.dart';
 import 'package:mp3player/ui/widgets/mini_play.dart';
 import 'package:mp3player/ui/widgets/song_tile.dart';
 import 'package:mp3player/utilities/colors.dart';
+import 'package:mp3player/utilities/theme_controller.dart';
 import 'package:on_audio_query/on_audio_query.dart';
-
 import '../controllers/song_controller.dart';
 import '../controllers/player_controller.dart';
 
@@ -13,11 +14,11 @@ class PlaylistDetailPage extends StatelessWidget {
   final Playlist playlist;
   const PlaylistDetailPage({super.key, required this.playlist});
 
-// play_list_details.dart - update Scaffold
   @override
   Widget build(BuildContext context) {
     final SongController songController = Get.find();
     final PlayerController playerController = Get.find();
+    final theme = Get.find<ThemeController>();
 
     final songs = playlist.songPaths
         .map((path) => songController.getSongByPath(path))
@@ -26,12 +27,11 @@ class PlaylistDetailPage extends StatelessWidget {
         .toList();
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Make transparent
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text(playlist.name,
-            style: const TextStyle(color: AppColors.textPrimary)),
+        title: Text(playlist.name, style: TextStyle(color: theme.textPrimary)),
       ),
       body: SafeArea(
         bottom: true,
@@ -40,9 +40,9 @@ class PlaylistDetailPage extends StatelessWidget {
           children: [
             Expanded(
               child: songs.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text('Playlist is empty',
-                          style: TextStyle(color: AppColors.textSecondary)))
+                          style: TextStyle(color: theme.textSecondary)))
                   : ListView.builder(
                       itemCount: songs.length,
                       itemBuilder: (context, index) {

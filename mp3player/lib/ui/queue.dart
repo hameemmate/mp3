@@ -1,30 +1,32 @@
+// queue.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mp3player/ui/widgets/song_tile.dart';
 import 'package:mp3player/utilities/colors.dart';
+import 'package:mp3player/utilities/theme_controller.dart';
 import '../controllers/player_controller.dart';
 
 class QueuePage extends StatelessWidget {
   const QueuePage({super.key});
 
-  // queue.dart - update Scaffold
   @override
   Widget build(BuildContext context) {
     final PlayerController controller = Get.find();
+    final theme = Get.find<ThemeController>();
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Make transparent
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Current Queue',
-            style: TextStyle(color: AppColors.textPrimary)),
+        title:
+            Text('Current Queue', style: TextStyle(color: theme.textPrimary)),
       ),
       body: Obx(() {
         if (controller.queue.isEmpty) {
-          return const Center(
+          return Center(
             child: Text('Queue is empty',
-                style: TextStyle(color: AppColors.textSecondary)),
+                style: TextStyle(color: theme.textSecondary)),
           );
         }
         return ListView.builder(
@@ -41,7 +43,7 @@ class QueuePage extends StatelessWidget {
               },
               leading: Obx(
                 () => controller.currentSong.value?.id == song.id
-                    ? const Icon(Icons.play_arrow, color: AppColors.primary)
+                    ? Icon(Icons.play_arrow, color: theme.primary)
                     : const SizedBox.shrink(),
               ),
             );

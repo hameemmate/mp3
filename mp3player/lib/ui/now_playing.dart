@@ -1,24 +1,62 @@
-// now_playing.dart - NO GalaxyBackground wrapper here
+// now_playing.dart
 import 'dart:ui';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mp3player/utilities/colors.dart';
+import 'package:mp3player/utilities/theme_controller.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import '../controllers/player_controller.dart';
 
-class NowPlayingPage extends StatelessWidget {
+class NowPlayingPage extends StatefulWidget {
   const NowPlayingPage({super.key});
+
+  @override
+  State<NowPlayingPage> createState() => _NowPlayingPageState();
+}
+
+class _NowPlayingPageState extends State<NowPlayingPage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _spinController;
+
+  @override
+  void initState() {
+    super.initState();
+    _spinController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    );
+
+    final player = Get.find<PlayerController>();
+    if (player.isPlaying.value) _spinController.repeat();
+
+    // sync spin with play/pause
+    ever(player.isPlaying, (bool playing) {
+      if (playing) {
+        _spinController.repeat();
+      } else {
+        _spinController.stop();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _spinController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final player = Get.find<PlayerController>();
+    final theme = Get.find<ThemeController>();
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Transparent to show root galaxy
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Obx(() {
           if (player.currentSong.value == null) {
-            return const Center(
+            return Center(
               child: Text('No track selected',
                   style: TextStyle(color: AppColors.textSecondary)),
             );
@@ -35,15 +73,15 @@ class NowPlayingPage extends StatelessWidget {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                      icon: Icon(Icons.keyboard_arrow_down_rounded,
                           color: AppColors.textSecondary, size: 30),
                       onPressed: () => Get.back(),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Text('Now Playing',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: theme.textSecondary,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             letterSpacing: 0.5,
@@ -56,51 +94,97 @@ class NowPlayingPage extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // Album Art
+              // Vinyl Disk with Album Art
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
                 child: AspectRatio(
                   aspectRatio: 1,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.35),
-                          blurRadius: 40,
-                          spreadRadius: 4,
-                        ),
-                        BoxShadow(
-                          color: AppColors.aurora1.withOpacity(0.2),
-                          blurRadius: 60,
-                          spreadRadius: 8,
-                          offset: const Offset(10, 10),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: QueryArtworkWidget(
-                        id: song.id,
-                        type: ArtworkType.AUDIO,
-                        keepOldArtwork: true,
-                        artworkFit: BoxFit.cover,
-                        nullArtworkWidget: Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
+                  child: AnimatedBuilder(
+                    animation: _spinController,
+                    builder: (context, child) {
+                      return Transform.rotate(
+                        angle: _spinController.value * 2 * math.pi,
+                        child: child,
+                      );
+                    },
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Vinyl outer ring
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
                               colors: [
-                                AppColors.primary,
-                                AppColors.aurora1,
-                                AppColors.aurora2
+                                const Color(0xFF1a1a1a),
+                                const Color(0xFF111111),
+                                const Color(0xFF2a2a2a),
+                                const Color(0xFF111111),
                               ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              stops: const [0.0, 0.3, 0.6, 1.0],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: theme.primary.withOpacity(0.4),
+                                blurRadius: 40,
+                                spreadRadius: 4,
+                              ),
+                              BoxShadow(
+                                color: theme.aurora1.withOpacity(0.2),
+                                blurRadius: 60,
+                                spreadRadius: 8,
+                                offset: const Offset(10, 10),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Vinyl grooves (concentric rings)
+                        ..._buildGrooves(),
+
+                        // Center label (album art circle)
+                        ClipOval(
+                          child: SizedBox(
+                            width: 180, // ~55% of typical album art size
+                            height: 180,
+                            child: QueryArtworkWidget(
+                              id: song.id,
+                              type: ArtworkType.AUDIO,
+                              keepOldArtwork: true,
+                              artworkFit: BoxFit.cover,
+                              artworkQuality: FilterQuality.high,
+                              artworkBorder: BorderRadius.circular(999),
+                              nullArtworkWidget: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      theme.primary,
+                                      theme.aurora1,
+                                      theme.aurora2
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                ),
+                                child: const Icon(Icons.music_note_rounded,
+                                    size: 72, color: Colors.white54),
+                              ),
                             ),
                           ),
-                          child: const Icon(Icons.music_note_rounded,
-                              size: 100, color: Colors.white54),
                         ),
-                      ),
+
+                        // Center spindle hole
+                        Container(
+                          width: 14,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFF111111),
+                            border: Border.all(color: Colors.white12, width: 1),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -114,18 +198,18 @@ class NowPlayingPage extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(song.displayNameWOExt,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: theme.textPrimary,
                         ),
                         textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 6),
                     Text(song.artist ?? 'Unknown artist',
-                        style: const TextStyle(
-                            fontSize: 15, color: AppColors.textSecondary)),
+                        style: TextStyle(
+                            fontSize: 15, color: theme.textSecondary)),
                   ],
                 ),
               ),
@@ -139,10 +223,10 @@ class NowPlayingPage extends StatelessWidget {
                   children: [
                     SliderTheme(
                       data: SliderTheme.of(context).copyWith(
-                        activeTrackColor: AppColors.primary,
-                        inactiveTrackColor: AppColors.glassLight,
+                        activeTrackColor: theme.primary,
+                        inactiveTrackColor: theme.glassLight,
                         thumbColor: Colors.white,
-                        overlayColor: AppColors.primary.withOpacity(0.2),
+                        overlayColor: theme.primary.withOpacity(0.2),
                         trackHeight: 3.5,
                         thumbShape:
                             const RoundSliderThumbShape(enabledThumbRadius: 6),
@@ -166,11 +250,11 @@ class NowPlayingPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(_fmt(position),
-                              style: const TextStyle(
-                                  color: AppColors.textHint, fontSize: 12)),
+                              style: TextStyle(
+                                  color: theme.textHint, fontSize: 12)),
                           Text(_fmt(duration),
-                              style: const TextStyle(
-                                  color: AppColors.textHint, fontSize: 12)),
+                              style: TextStyle(
+                                  color: theme.textHint, fontSize: 12)),
                         ],
                       ),
                     ),
@@ -191,9 +275,9 @@ class NowPlayingPage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 12),
                       decoration: BoxDecoration(
-                        color: AppColors.glassLight,
+                        color: theme.glassLight,
                         borderRadius: BorderRadius.circular(32),
-                        border: Border.all(color: AppColors.glassBorder),
+                        border: Border.all(color: theme.glassBorder),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -201,14 +285,14 @@ class NowPlayingPage extends StatelessWidget {
                           Obx(() => IconButton(
                                 icon: Icon(Icons.shuffle_rounded,
                                     color: player.isShuffleOn.value
-                                        ? AppColors.primary
-                                        : AppColors.textHint),
+                                        ? theme.primary
+                                        : theme.textHint),
                                 iconSize: 26,
                                 onPressed: player.toggleShuffle,
                               )),
                           IconButton(
-                            icon: const Icon(Icons.skip_previous_rounded,
-                                color: AppColors.textPrimary),
+                            icon: Icon(Icons.skip_previous_rounded,
+                                color: theme.textPrimary),
                             iconSize: 36,
                             onPressed: player.previous,
                           ),
@@ -219,18 +303,14 @@ class NowPlayingPage extends StatelessWidget {
                                   height: 64,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        AppColors.primary,
-                                        AppColors.aurora2
-                                      ],
+                                    gradient: LinearGradient(
+                                      colors: [theme.primary, theme.aurora2],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color:
-                                            AppColors.primary.withOpacity(0.5),
+                                        color: theme.primary.withOpacity(0.5),
                                         blurRadius: 20,
                                         spreadRadius: 2,
                                       ),
@@ -246,13 +326,13 @@ class NowPlayingPage extends StatelessWidget {
                                 ),
                               )),
                           IconButton(
-                            icon: const Icon(Icons.skip_next_rounded,
-                                color: AppColors.textPrimary),
+                            icon: Icon(Icons.skip_next_rounded,
+                                color: theme.textPrimary),
                             iconSize: 36,
                             onPressed: player.next,
                           ),
                           IconButton(
-                            icon: const Icon(Icons.repeat_rounded,
+                            icon: Icon(Icons.repeat_rounded,
                                 color: AppColors.textHint),
                             iconSize: 26,
                             onPressed: () {},
@@ -269,6 +349,26 @@ class NowPlayingPage extends StatelessWidget {
         }),
       ),
     );
+  }
+
+  /// Build subtle vinyl groove rings
+  List<Widget> _buildGrooves() {
+    const grooveRadii = [0.48, 0.44, 0.40, 0.36, 0.32];
+    return grooveRadii
+        .map((r) => FractionallySizedBox(
+              widthFactor: r * 2,
+              heightFactor: r * 2,
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.04),
+                    width: 1.2,
+                  ),
+                ),
+              ),
+            ))
+        .toList();
   }
 
   String _fmt(Duration d) {
