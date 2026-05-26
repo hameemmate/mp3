@@ -1,4 +1,4 @@
-// galaxy_widgets.dart - Update to use theme colors
+// galaxy_widgets.dart
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -18,7 +18,6 @@ class GalaxyBackground extends StatelessWidget {
     return Obx(() => Stack(
           fit: StackFit.expand,
           children: [
-            // Dynamic background based on theme
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -40,7 +39,151 @@ class GalaxyBackground extends StatelessWidget {
   }
 }
 
-// Update AuroraLayer to accept theme
+// ─── Star Field ───────────────────────────────────────────────────────────────
+
+class _StarField extends StatefulWidget {
+  const _StarField();
+  @override
+  State<_StarField> createState() => _StarFieldState();
+}
+
+class _StarFieldState extends State<_StarField> with TickerProviderStateMixin {
+  late AnimationController _twinkleCtrl;
+  late AnimationController _shootCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _twinkleCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+    _shootCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _twinkleCtrl.dispose();
+    _shootCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: Listenable.merge([_twinkleCtrl, _shootCtrl]),
+        builder: (_, __) => CustomPaint(
+          painter: _StarPainter(_twinkleCtrl.value, _shootCtrl.value),
+          size: Size.infinite,
+        ),
+      );
+}
+
+class _StarPainter extends CustomPainter {
+  final double twinkle;
+  final double shoot;
+
+  _StarPainter(this.twinkle, this.shoot);
+
+  static final _stars = List.generate(140, (i) {
+    final r = (i * 2654435761 + 1234567) % 100000;
+    return _S(
+      x: (r % 1000) / 1000.0,
+      y: ((r * 999983) % 1000) / 1000.0,
+      radius: (r % 5 + 2) / 5.5,
+      baseOpacity: (r % 6 + 3) / 14.0,
+      twinkleSpeed: (r % 5 + 1) / 3.0,
+      twinklePhase: (r % 100) / 100.0,
+    );
+  });
+
+  static const _shoots = [
+    _Shoot(startX: 0.1, startY: 0.05, angle: 0.4, delay: 0.0, len: 0.18),
+    _Shoot(startX: 0.6, startY: 0.12, angle: 0.35, delay: 0.33, len: 0.14),
+    _Shoot(startX: 0.3, startY: 0.08, angle: 0.45, delay: 0.66, len: 0.16),
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Twinkling stars
+    for (final s in _stars) {
+      final phase = (twinkle * s.twinkleSpeed + s.twinklePhase) % 1.0;
+      final flicker = sin(phase * 2 * pi) * 0.4 + 0.6;
+      final opacity = (s.baseOpacity * flicker).clamp(0.05, 1.0);
+      canvas.drawCircle(
+        Offset(s.x * size.width, s.y * size.height),
+        s.radius,
+        Paint()..color = Colors.white.withOpacity(opacity),
+      );
+    }
+
+    // Shooting stars
+    for (final sh in _shoots) {
+      final t = (shoot + sh.delay) % 1.0;
+      if (t > 0.3) continue;
+      final progress = t / 0.3;
+      final opacity = progress < 0.5 ? progress * 2 : (1 - progress) * 2;
+
+      final headX =
+          (sh.startX + cos(sh.angle) * sh.len * progress) * size.width;
+      final headY =
+          (sh.startY + sin(sh.angle) * sh.len * progress) * size.height;
+      final tailX =
+          (sh.startX + cos(sh.angle) * sh.len * (progress - 0.08).clamp(0, 1)) *
+              size.width;
+      final tailY =
+          (sh.startY + sin(sh.angle) * sh.len * (progress - 0.08).clamp(0, 1)) *
+              size.height;
+
+      canvas.drawLine(
+        Offset(tailX, tailY),
+        Offset(headX, headY),
+        Paint()
+          ..color = Colors.white.withOpacity(opacity * 0.85)
+          ..strokeWidth = 1.5
+          ..strokeCap = StrokeCap.round
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5),
+      );
+      canvas.drawCircle(
+        Offset(headX, headY),
+        1.8,
+        Paint()..color = Colors.white.withOpacity(opacity),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _StarPainter old) =>
+      old.twinkle != twinkle || old.shoot != shoot;
+}
+
+class _S {
+  final double x, y, radius, baseOpacity, twinkleSpeed, twinklePhase;
+  const _S({
+    required this.x,
+    required this.y,
+    required this.radius,
+    required this.baseOpacity,
+    required this.twinkleSpeed,
+    required this.twinklePhase,
+  });
+}
+
+class _Shoot {
+  final double startX, startY, angle, delay, len;
+  const _Shoot({
+    required this.startX,
+    required this.startY,
+    required this.angle,
+    required this.delay,
+    required this.len,
+  });
+}
+
+// ─── Aurora Layer ─────────────────────────────────────────────────────────────
+
 class _AuroraLayer extends StatefulWidget {
   final AppTheme theme;
   const _AuroraLayer({required this.theme});
@@ -86,7 +229,6 @@ class _AuroraPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final ribbons = theme.auroraRibbons;
 
-    // Use theme's ribbon colors
     if (ribbons.isNotEmpty) {
       _ribbon(canvas, size,
           phase: t * 2 * pi,
@@ -197,7 +339,8 @@ class _AuroraPainter extends CustomPainter {
       old.t != t || old.theme != theme;
 }
 
-// Update WaveformLayer to accept theme
+// ─── Waveform Layer ───────────────────────────────────────────────────────────
+
 class _WaveformLayer extends StatefulWidget {
   final AppTheme theme;
   const _WaveformLayer({required this.theme});
@@ -243,7 +386,6 @@ class _WaveformPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final baseY = size.height * 0.78;
 
-    // Filled glow under main wave
     _drawFill(canvas, size, baseY,
         phase: t * 2 * pi, amplitude: size.height * 0.04, color: theme.primary);
     _drawFill(canvas, size, baseY + size.height * 0.012,
@@ -251,7 +393,6 @@ class _WaveformPainter extends CustomPainter {
         amplitude: size.height * 0.03,
         color: theme.aurora1);
 
-    // Wave lines
     _drawWave(canvas, size, baseY,
         phase: t * 2 * pi,
         amplitude: size.height * 0.04,
@@ -345,44 +486,8 @@ class _WaveformPainter extends CustomPainter {
       old.t != t || old.theme != theme;
 }
 
-// Star field remains the same
-class _StarField extends StatelessWidget {
-  const _StarField();
-  @override
-  Widget build(BuildContext context) => CustomPaint(painter: _StarPainter());
-}
+// ─── GlassCard ────────────────────────────────────────────────────────────────
 
-class _StarPainter extends CustomPainter {
-  static final _stars = List.generate(160, (i) {
-    final r = (i * 2654435761 + 1234567) % 100000;
-    return _S(
-        x: (r % 1000) / 1000.0,
-        y: ((r * 999983) % 1000) / 1000.0,
-        radius: (r % 5 + 2) / 5.5,
-        opacity: (r % 6 + 2) / 14.0);
-  });
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (final s in _stars) {
-      canvas.drawCircle(Offset(s.x * size.width, s.y * size.height), s.radius,
-          Paint()..color = Colors.white.withOpacity(s.opacity));
-    }
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
-}
-
-class _S {
-  final double x, y, radius, opacity;
-  const _S(
-      {required this.x,
-      required this.y,
-      required this.radius,
-      required this.opacity});
-}
-
-// GlassCard helper - unchanged but uses AppColors which now gets from theme
 class GlassCard extends StatelessWidget {
   final Widget child;
   final double borderRadius;

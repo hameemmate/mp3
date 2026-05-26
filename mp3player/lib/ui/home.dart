@@ -84,7 +84,9 @@ class HomePage extends StatelessWidget {
                   );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                  ),
                   itemCount: songs.length,
                   itemBuilder: (context, index) {
                     final song = songs[index];

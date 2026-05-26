@@ -18,7 +18,7 @@ class MainWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Get.find<ThemeController>();
     final RxInt currentIndex = 0.obs;
-    final pages = const [
+    final pages = [
       HomePage(),
       PlaylistsPage(),
       QueuePage(),
