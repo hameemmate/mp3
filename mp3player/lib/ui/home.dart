@@ -21,13 +21,15 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
-        child: Column(
-          children: [
-            const ProfileSection(),
-            // Glass search bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Obx(() => Container(
+        child: Obx(() => Column(
+              // Wrap Column with Obx to listen to theme changes
+              children: [
+                const ProfileSection(),
+                // Glass search bar
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Container(
                     decoration: BoxDecoration(
                       color: theme.glassLight,
                       borderRadius: BorderRadius.circular(16),
@@ -47,63 +49,70 @@ class HomePage extends StatelessWidget {
                             const EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
-                  )),
-            ),
-            // Section header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('All Songs',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        color: theme.textPrimary,
-                      )),
-                  Obx(() => Text(
-                        '${songController.filteredSongs.length} tracks',
-                        style: TextStyle(fontSize: 12, color: theme.textHint),
-                      )),
-                ],
-              ),
-            ),
-            // Song list
-            Expanded(
-              child: Obx(() {
-                if (songController.isLoading.value) {
-                  return Center(
-                    child: CircularProgressIndicator(color: theme.primary),
-                  );
-                }
-                final songs = songController.filteredSongs;
-                if (songs.isEmpty) {
-                  return Center(
-                    child: Text('No songs found',
-                        style: TextStyle(color: theme.textSecondary)),
-                  );
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
                   ),
-                  itemCount: songs.length,
-                  itemBuilder: (context, index) {
-                    final song = songs[index];
-                    final originalIndex = songController.allSongs.indexOf(song);
-                    return SongTile(
-                      song: song,
-                      onTap: () => playerController.playPlaylist(
-                        songController.allSongs.toList(),
-                        startIndex: originalIndex >= 0 ? originalIndex : 0,
+                ),
+                // Section header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('All Songs',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: theme.textPrimary,
+                          )),
+                      Obx(() => Text(
+                            '${songController.filteredSongs.length} tracks',
+                            style:
+                                TextStyle(fontSize: 12, color: theme.textHint),
+                          )),
+                    ],
+                  ),
+                ),
+                // Song list
+                Expanded(
+                  child: Obx(() {
+                    if (songController.isLoading.value) {
+                      return Center(
+                        child: CircularProgressIndicator(color: theme.primary),
+                      );
+                    }
+                    final songs = songController.filteredSongs;
+                    if (songs.isEmpty) {
+                      return Center(
+                        child: Text('No songs found',
+                            style: TextStyle(color: theme.textSecondary)),
+                      );
+                    }
+                    return ListView.builder(
+                      padding: EdgeInsets.only(
+                        left: 12,
+                        right: 12,
+                        bottom: playerController.currentSong.value != null
+                            ? 180
+                            : 100,
                       ),
+                      itemCount: songs.length,
+                      itemBuilder: (context, index) {
+                        final song = songs[index];
+                        final originalIndex =
+                            songController.allSongs.indexOf(song);
+                        return SongTile(
+                          key: ValueKey(song.id),
+                          song: song,
+                          onTap: () => playerController.playPlaylist(
+                            songController.allSongs.toList(),
+                            startIndex: originalIndex >= 0 ? originalIndex : 0,
+                          ),
+                        );
+                      },
                     );
-                  },
-                );
-              }),
-            ),
-          ],
-        ),
+                  }),
+                ),
+              ],
+            )),
       ),
     );
   }

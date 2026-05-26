@@ -23,6 +23,7 @@ class QueuePage extends StatelessWidget {
             Text('Current Queue', style: TextStyle(color: theme.textPrimary)),
       ),
       body: Obx(() {
+        final bool isSongPlaying = controller.currentSong.value != null;
         if (controller.queue.isEmpty) {
           return Center(
             child: Text('Queue is empty',
@@ -30,6 +31,11 @@ class QueuePage extends StatelessWidget {
           );
         }
         return ListView.builder(
+          padding: EdgeInsets.only(
+            left: 12,
+            right: 12,
+            bottom: isSongPlaying ? 180 : 100,
+          ),
           itemCount: controller.queue.length,
           itemBuilder: (context, index) {
             final song = controller.queue[index];

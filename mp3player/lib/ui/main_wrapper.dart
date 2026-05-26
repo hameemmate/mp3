@@ -2,10 +2,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mp3player/ui/favorites.dart';
 import 'package:mp3player/ui/home.dart';
 import 'package:mp3player/ui/playlist_page.dart';
 import 'package:mp3player/ui/profile_page.dart';
-import 'package:mp3player/ui/queue.dart';
 import 'package:mp3player/ui/widgets/mini_play.dart';
 import 'package:mp3player/ui/widgets/galaxy_widgets.dart';
 import 'package:mp3player/utilities/colors.dart';
@@ -21,7 +21,7 @@ class MainWrapper extends StatelessWidget {
     final pages = [
       HomePage(),
       PlaylistsPage(),
-      QueuePage(),
+      FavoritesPage(), // New favorites page
       ProfilePage(),
     ];
 
@@ -88,7 +88,7 @@ class _GlassBottomNav extends StatelessWidget {
     final items = const [
       _NavItem(icon: Icons.home_rounded, label: 'Home'),
       _NavItem(icon: Icons.library_music_rounded, label: 'Playlists'),
-      _NavItem(icon: Icons.queue_music_rounded, label: 'Queue'),
+      _NavItem(icon: Icons.favorite_rounded, label: 'Favorites'), // Changed
       _NavItem(icon: Icons.person_rounded, label: 'Profile'),
     ];
 

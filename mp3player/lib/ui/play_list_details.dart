@@ -31,7 +31,10 @@ class PlaylistDetailPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text(playlist.name, style: TextStyle(color: theme.textPrimary)),
+        title: Obx(() => Text(
+              playlist.name,
+              style: TextStyle(color: theme.current.textPrimary),
+            )),
       ),
       body: SafeArea(
         bottom: true,
@@ -41,21 +44,30 @@ class PlaylistDetailPage extends StatelessWidget {
             Expanded(
               child: songs.isEmpty
                   ? Center(
-                      child: Text('Playlist is empty',
-                          style: TextStyle(color: theme.textSecondary)))
-                  : ListView.builder(
-                      itemCount: songs.length,
-                      itemBuilder: (context, index) {
-                        final song = songs[index];
-                        return SongTile(
-                          song: song,
-                          onTap: () => playerController.playPlaylist(
-                            songs,
-                            startIndex: index,
-                          ),
-                        );
-                      },
-                    ),
+                      child: Obx(() => Text(
+                            'Playlist is empty',
+                            style:
+                                TextStyle(color: theme.current.textSecondary),
+                          )),
+                    )
+                  : Obx(() => ListView.builder(
+                        padding: EdgeInsets.only(
+                          bottom: playerController.currentSong.value != null
+                              ? 180
+                              : 100,
+                        ),
+                        itemCount: songs.length,
+                        itemBuilder: (context, index) {
+                          final song = songs[index];
+                          return SongTile(
+                            song: song,
+                            onTap: () => playerController.playPlaylist(
+                              songs,
+                              startIndex: index,
+                            ),
+                          );
+                        },
+                      )),
             ),
             const MiniPlayer(),
           ],

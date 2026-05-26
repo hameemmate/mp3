@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:mp3player/controllers/favorite_controller.dart';
 import 'package:mp3player/controllers/player_controller.dart';
 import 'package:mp3player/controllers/playlist_controller.dart';
 import 'package:mp3player/ui/main_wrapper.dart';
@@ -23,6 +24,8 @@ class _SplashScreenState extends State<SplashScreen> {
     checkPermissionAndLoad();
   }
 
+// Then in the checkPermissionAndLoad() method, add this line where you initialize other controllers:
+
   Future<void> checkPermissionAndLoad() async {
     // Check and request storage permissions
     bool hasPermission = false;
@@ -45,6 +48,10 @@ class _SplashScreenState extends State<SplashScreen> {
       }
       if (!Get.isRegistered<PlaylistController>()) {
         Get.put(PlaylistController(), permanent: true);
+      }
+      // Add this line to initialize FavoritesController
+      if (!Get.isRegistered<FavoritesController>()) {
+        Get.put(FavoritesController(), permanent: true);
       }
 
       // Wait a short moment for UI feedback
