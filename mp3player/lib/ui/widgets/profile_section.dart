@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mp3player/controllers/song_controller.dart';
-import 'package:mp3player/utilities/colors.dart';
 import 'package:mp3player/utilities/theme_controller.dart';
 
 class ProfileSection extends StatelessWidget {
@@ -17,67 +16,80 @@ class ProfileSection extends StatelessWidget {
     return Obx(() => Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: theme.glassLight,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: theme.glassBorder),
                 ),
                 child: Row(
                   children: [
-                    // Avatar with aurora ring
+                    // ── WATT Logo ──────────────────────────────
                     Container(
-                      width: 46,
-                      height: 46,
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [theme.aurora1, theme.aurora2],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                        color: Colors.black.withOpacity(0.3),
                         boxShadow: [
                           BoxShadow(
-                            color: theme.aurora1.withOpacity(0.4),
-                            blurRadius: 12,
-                            spreadRadius: 1,
+                            color: theme.primary.withOpacity(0.35),
+                            blurRadius: 14,
+                            spreadRadius: 2,
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.person_rounded,
-                          color: Colors.white, size: 24),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.cover,
+                      ),
                     ),
+
                     const SizedBox(width: 14),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Music Lover',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: theme.textPrimary,
+
+                    // ── Name + song count ──────────────────────
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'WATT MUSIC PLAYER',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: theme.textPrimary,
+                              letterSpacing: 1.2,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Obx(() => Text(
-                              '${songController.allSongs.length} songs on device',
-                              style: TextStyle(
-                                  color: theme.textHint, fontSize: 12),
-                            )),
-                      ],
+                          const SizedBox(height: 4),
+                          Obx(() => Text(
+                                '${songController.allSongs.length} songs on device',
+                                style: TextStyle(
+                                    color: theme.textHint, fontSize: 12),
+                              )),
+                        ],
+                      ),
                     ),
-                    const Spacer(),
-                    // Decorative music note
-                    Icon(
-                      Icons.graphic_eq_rounded,
-                      color: theme.primary.withOpacity(0.7),
-                      size: 28,
+
+                    // ── EQ icon ────────────────────────────────
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: theme.primary.withOpacity(0.12),
+                      ),
+                      child: Icon(
+                        Icons.graphic_eq_rounded,
+                        color: theme.primary,
+                        size: 20,
+                      ),
                     ),
                   ],
                 ),

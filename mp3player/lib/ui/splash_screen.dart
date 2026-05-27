@@ -15,19 +15,61 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
   final OnAudioQuery _audioQuery = OnAudioQuery();
+
+  late AnimationController _logoController;
+  late AnimationController _textController;
+  late Animation<double> _fadeAnim;
+  late Animation<double> _scaleAnim;
+  late Animation<double> _textFadeAnim;
+  late Animation<Offset> _textSlideAnim;
 
   @override
   void initState() {
     super.initState();
+
+    // Logo animation: fade + scale
+    _logoController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _fadeAnim = CurvedAnimation(parent: _logoController, curve: Curves.easeIn);
+    _scaleAnim = Tween<double>(begin: 0.75, end: 1.0).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.elasticOut),
+    );
+
+    // Text animation: fade + slide up
+    _textController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _textFadeAnim =
+        CurvedAnimation(parent: _textController, curve: Curves.easeIn);
+    _textSlideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _textController, curve: Curves.easeOut),
+    );
+
+    // Start logo anim, then text anim
+    _logoController.forward().then((_) {
+      _textController.forward();
+    });
+
     checkPermissionAndLoad();
   }
 
-// Then in the checkPermissionAndLoad() method, add this line where you initialize other controllers:
+  @override
+  void dispose() {
+    _logoController.dispose();
+    _textController.dispose();
+    super.dispose();
+  }
 
   Future<void> checkPermissionAndLoad() async {
-    // Check and request storage permissions
     bool hasPermission = false;
     try {
       hasPermission = await _audioQuery.permissionsStatus() ?? false;
@@ -39,7 +81,6 @@ class _SplashScreenState extends State<SplashScreen> {
     }
 
     if (hasPermission) {
-      // Initialize controllers only if they're not already registered
       if (!Get.isRegistered<SongController>()) {
         Get.put(SongController(), permanent: true);
       }
@@ -49,19 +90,17 @@ class _SplashScreenState extends State<SplashScreen> {
       if (!Get.isRegistered<PlaylistController>()) {
         Get.put(PlaylistController(), permanent: true);
       }
-      // Add this line to initialize FavoritesController
       if (!Get.isRegistered<FavoritesController>()) {
         Get.put(FavoritesController(), permanent: true);
       }
 
-      // Wait a short moment for UI feedback
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Min 2s so animation plays fully
+      await Future.delayed(const Duration(milliseconds: 2000));
 
       if (mounted) {
         Get.offAll(() => const MainWrapper());
       }
     } else {
-      // Show permission denied dialog and exit
       if (mounted) {
         Get.dialog(
           AlertDialog(
@@ -73,7 +112,7 @@ class _SplashScreenState extends State<SplashScreen> {
               TextButton(
                 onPressed: () {
                   Get.back();
-                  checkPermissionAndLoad(); // retry
+                  checkPermissionAndLoad();
                 },
                 child: const Text('Retry'),
               ),
@@ -104,16 +143,72 @@ class _SplashScreenState extends State<SplashScreen> {
             end: Alignment.bottomRight,
           ),
         ),
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.music_note, size: 80, color: Colors.teal),
-              SizedBox(height: 24),
-              Text('Loading your music...',
-                  style: TextStyle(fontSize: 18, color: Colors.white)),
-              SizedBox(height: 16),
-              CircularProgressIndicator(),
+              // ── Animated Logo ──────────────────────────
+              ScaleTransition(
+                scale: _scaleAnim,
+                child: FadeTransition(
+                  opacity: _fadeAnim,
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 200,
+                    height: 200,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // ── Animated App Name + tagline ────────────
+              FadeTransition(
+                opacity: _textFadeAnim,
+                child: SlideTransition(
+                  position: _textSlideAnim,
+                  child: Column(
+                    children: [
+                      Text(
+                        'WATT MUSIC PLAYER',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 3,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Your Music. Your Watt.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white54,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 60),
+
+              // ── Loading indicator ──────────────────────
+              FadeTransition(
+                opacity: _textFadeAnim,
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      themeController?.primary ?? Colors.teal,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

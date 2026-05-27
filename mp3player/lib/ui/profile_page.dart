@@ -30,9 +30,17 @@ class ProfilePage extends StatelessWidget {
               children: [
                 // ── Header ──────────────────────────────────
                 const SizedBox(height: 12),
-                _Avatar(primary: t.primary, aurora1: t.aurora1),
+
+                // Logo instead of generic avatar
+                Image.asset(
+                  'assets/images/logo.png',
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.contain,
+                ),
+
                 const SizedBox(height: 14),
-                Text('Ahamed Hameem',
+                Text('WATT',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -186,7 +194,7 @@ class ProfilePage extends StatelessWidget {
                 // Version
                 Text('v1.0.0  •  Made with ♥ by Ahamed',
                     style: TextStyle(color: t.textHint, fontSize: 11)),
-                const SizedBox(height: 40),
+                SizedBox(height: Get.width * .3),
               ],
             );
           }),
@@ -232,7 +240,7 @@ class ProfilePage extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Header with icon
+                  // Header with logo
                   Container(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
                     decoration: BoxDecoration(
@@ -245,37 +253,21 @@ class ProfilePage extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [t.primary, t.aurora1, t.aurora2],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: t.primary.withOpacity(0.4),
-                                blurRadius: 20,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.music_note_rounded,
-                            color: Colors.white,
-                            size: 44,
-                          ),
+                        // ── WATT Logo ──────────────────────────
+                        Image.asset(
+                          'assets/images/logo.png',
+                          width: 90,
+                          height: 90,
+                          fit: BoxFit.contain,
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Galaxy Music Player',
+                          'WATT MUSIC PLAYER',
                           style: TextStyle(
                             color: t.textPrimary,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.5,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -296,7 +288,7 @@ class ProfilePage extends StatelessWidget {
                     child: Column(
                       children: [
                         Text(
-                          'A beautiful offline music player with galaxy-inspired design. Play your local music in style with a stunning cosmic experience.',
+                          'A powerful offline music player built for rock & party lovers. Play your local music loud — no internet needed.',
                           style: TextStyle(
                             color: t.textSecondary,
                             fontSize: 14,
@@ -427,7 +419,7 @@ class ProfilePage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: Text(
+                        child: const Text(
                           'Close',
                           style: TextStyle(
                             color: Colors.black,
@@ -466,7 +458,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // ── URL Launchers with proper handling ──────────────────────────────
+  // ── URL Launchers ──────────────────────────────────────────────────
   Future<void> _launchInstagram() async {
     final Uri uri = Uri.parse('https://www.instagram.com/hameem.ahamed');
     await _launchUrl(uri);
@@ -482,24 +474,16 @@ class ProfilePage extends StatelessWidget {
     await _launchUrl(uri);
   }
 
-  // Update the _launchUrl method in profile_page.dart
   Future<void> _launchUrl(Uri uri) async {
     try {
-      // For Instagram, try to open the app first
       if (uri.toString().contains('instagram.com')) {
         final instagramUri =
             Uri.parse(uri.toString().replaceFirst('https://www.', 'https://'));
-        // Try to open in Instagram app
         if (await canLaunchUrl(instagramUri)) {
-          await launchUrl(
-            instagramUri,
-            mode: LaunchMode.externalApplication,
-          );
+          await launchUrl(instagramUri, mode: LaunchMode.externalApplication);
           return;
         }
       }
-
-      // For all other URLs, open in browser
       if (await canLaunchUrl(uri)) {
         await launchUrl(
           uri,
@@ -551,7 +535,6 @@ class _ThemePickerSheet extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle bar
                 Container(
                     width: 40,
                     height: 4,
@@ -606,7 +589,6 @@ class _ThemePickerSheet extends StatelessWidget {
                         ),
                         child: Stack(
                           children: [
-                            // Color dots
                             Positioned(
                               bottom: 10,
                               left: 12,
@@ -618,7 +600,6 @@ class _ThemePickerSheet extends StatelessWidget {
                                 _dot(theme.aurora2),
                               ]),
                             ),
-                            // Name
                             Positioned(
                               top: 10,
                               left: 12,
@@ -631,7 +612,6 @@ class _ThemePickerSheet extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            // Checkmark
                             if (selected)
                               Positioned(
                                 top: 8,
